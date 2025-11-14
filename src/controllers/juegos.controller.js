@@ -23,6 +23,7 @@ export const crearJuego = async (req, res) => {
   try {
     const nuevoJuego = new Juego(req.body);
     await nuevoJuego.save();
+    console.log("Juego creado correctamente");
     res.status(201).json(nuevoJuego);
   } catch {
     res.status(400).json({ mensaje: "Error al crear juego" });
@@ -32,6 +33,7 @@ export const crearJuego = async (req, res) => {
 export const actualizarJuego = async (req, res) => {
   try {
     const juego = await Juego.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    console.log("Juego actualizado correctamente");
     res.json(juego);
   } catch {
     res.status(400).json({ mensaje: "Error al actualizar juego" });
