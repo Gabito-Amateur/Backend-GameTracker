@@ -5,7 +5,7 @@ export const obtenerResenas = async (req, res) => {
   try {
     const resenas = await Resena.find().populate("juegoId");
     res.json(resenas);
-  } catch {
+  } catch (error) {
     console.error("Error al obtener reseñas:", error);
     res.status(500).json({ mensaje: "Error al obtener reseñas" });
   }
@@ -18,7 +18,7 @@ export const obtenerResenasPorJuego = async (req, res) => {
 
     res.json(resenas);
     
-  } catch {
+  } catch (error) {
     console.error("Error al obtener reseñas del juego:", error);
     res.status(500).json({ mensaje: "Error al obtener reseñas del juego" });
   }
@@ -47,7 +47,7 @@ export const crearResena = async (req, res) => {
 
     res.status(201).json(resenaCompleta);
 
-  } catch {
+  } catch (error) {
     console.error("Error al crear reseña:", error);
     res.status(400).json({ mensaje: "Error al crear reseña", error: error.message });
   }
@@ -56,18 +56,43 @@ export const crearResena = async (req, res) => {
 export const actualizarResena = async (req, res) => {
   try {
     const { id } = req.params;
-    const { puntuacion } = req.body;
+    const { puntuacion, textoResena, horasJugadas, dificultad, recomendaria } = req.body;
 
-    if (puntuacion && (puntuacion < 1 || puntuacion > 5)) {
+    // Validar que textoResena no esté vacío
+    if (!textoResena || textoResena.trim() === "") {
+      console.error("Validación fallida: textoResena vacío o no definido");
+      return res.status(400).json({ 
+        mensaje: "El texto de la reseña no puede estar vacío" 
+      });
+    }
+
+    // Validar puntuación (debe ser un número entre 1 y 5)
+    if (typeof puntuacion !== 'number' || puntuacion < 1 || puntuacion > 5) {
+      console.error("Validación fallida: puntuacion =", puntuacion, "tipo:", typeof puntuacion);
       return res.status(400).json({ 
         mensaje: "La puntuación debe estar entre 1 y 5" 
       });
     }
 
+    // Validar dificultad
+    const dificultadesValidas = ["Fácil", "Normal", "Difícil", "Muy Difícil"];
+    if (dificultad && !dificultadesValidas.includes(dificultad)) {
+      console.error("Validación fallida: dificultad =", dificultad);
+      return res.status(400).json({ 
+        mensaje: "Dificultad no válida" 
+      });
+    }
+
+    console.log("Actualizando reseña con datos:", { puntuacion, textoResena, horasJugadas, dificultad, recomendaria });
+
     const resenaActualizada = await Resena.findByIdAndUpdate(
       id,
       {
+        puntuacion,
         textoResena,
+        horasJugadas: horasJugadas || 0,
+        dificultad,
+        recomendaria,
         fechaActualizacion: Date.now(),
       },
       { new: true }
@@ -94,7 +119,7 @@ export const eliminarResena = async (req, res) => {
     }
 
     res.json({ mensaje: "Reseña eliminada correctamente" });
-  } catch {
+  } catch (error) {
     console.error("Error al eliminar reseña:", error);
     res.status(400).json({ mensaje: "Error al eliminar reseña" });
   }
